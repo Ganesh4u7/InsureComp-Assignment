@@ -1,6 +1,8 @@
 const express = require('express');
+const router = require('express').Router();
 const fs = require('fs');
 var path = require('path');
+var cors = require("cors");
 
 const port = normalizePort(process.env.PORT || '3000');
 
@@ -11,6 +13,8 @@ let total_sales = {
   total_money_generated:0,
   monthly_sales:{}
 };
+
+let total_item_sales ={};
 
 let most_popular_item ={};
 
@@ -48,65 +52,49 @@ let popular_item_analysis={
 
 let app_init = async () => {
        const app = express();
+       app.use(cors());
 
-
-       app.use(express.static(path.join(__dirname, './views')));
+       app.use(express.static(path.join(__dirname,'./dist/insure-comp')));
        app.get('/',function(req,res){
-          res.sendFile(path.join(__dirname,"./views/index.html"));
+          res.sendFile(path.join(__dirname,"./dist/insure-comp/index.html"));
        });
-       app.get('/total_sales',function(req,res){
-          res.send({total_sales:total_sales.total_sales,total_money_generated:total_sales.total_money_generated});
-       });
-       app.get('/monthly_sales',function(req,res){
-         let monthly_sales = Object.values(total_sales.monthly_sales);
-         let sales =[];
-         
-        monthly_sales.forEach((month,index)=>{
 
+     
+
+       app.get('/get_data',function(req,res){
+        let monthly_sales = Object.values(total_sales.monthly_sales);
+        let sales =[];
+        let popular =[];
+        let revenue=[];
+     
+        monthly_sales.forEach((month,index)=>{
           sales.push({
             month :index+1,
             items:Object.values(month.items)
-          })
+          });
+          popular.push({
+            month : index+1,
+            popular_item: month.popular_item
+          });
+          revenue.push({
+            month : index+1,
+            revenue_generating_item: month.revenue_generating_item
+          });
         });
-        res.send(sales);
+
+        res.send({
+          total_sales:{total_sales:total_sales.total_sales,total_money_generated:total_sales.total_money_generated,sales:Object.values(total_item_sales)},
+          monthly_sales:sales,
+          monthy_popular_item:popular,
+          revenue_generated_item: revenue,
+          popular_item_analysis:popular_item_analysis
+        });
      });
 
-     app.get('/popular_item',function(req,res){
-
-      let monthly_sales = Object.values(total_sales.monthly_sales);
-      let popular =[];
-     
-      monthly_sales.forEach((month,index)=>{
-        popular.push({
-          month : index+1,
-          popular_item: month.popular_item
-        })
-      });
-
-      res.send(popular);
-   });
-
-    app.get('/revenue_generating_item',function(req,res){
-
-      let monthly_sales = Object.values(total_sales.monthly_sales);
-      let revenue=[];
-    
-      monthly_sales.forEach((month,index)=>{
-        revenue.push({
-          month : index+1,
-          revenue_generating_item: month.revenue_generating_item
-        })
-      });
-
-      res.send(revenue);
-
+     app.all('*', function(req, res) {
+      res.redirect("/"); 
     });
-
-    app.get('/popular_item_analysis',function(req,res){
-
-      res.send(popular_item_analysis);
-
-    });
+       
 
        fs.readFile(path.join(__dirname, `/assets/Assignment.txt`), 'utf8', function (err, data) {
          var dataArray = data.split(/\r?\n/);
@@ -159,6 +147,23 @@ function monthlySale(sale){
 
     total_sales.total_sales +=1;
     total_sales.total_money_generated += sale.total_price;
+
+    if(total_item_sales[`${sale.SKU}`] != undefined){
+      total_item_sales[`${sale.SKU}`].quantity +=sale.quantity;  
+      total_item_sales[`${sale.SKU}`].total_collected +=sale.total_price;  
+      total_item_sales[`${sale.SKU}`].sales +=1;
+    }
+    else{
+      total_item_sales[`${sale.SKU}`]={
+            total_collected:sale.total_price,
+            quantity:sale.quantity,
+            sales:1,
+            name:sale.SKU,
+            unit_price:sale.unit_price
+        }
+
+    }
+
 
     let month = sale.date.split("-")[1];
     if(total_sales.monthly_sales[`${month}`] != undefined){
