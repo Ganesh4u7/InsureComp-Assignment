@@ -263,6 +263,7 @@ function overall_popular_item(){
       });
       
         if(popular_item_analysis.min.total_sales == 0 || popular_item_analysis.min.total_sales > found.total_sales){
+          popular_item_analysis.min.month = parseInt(Object.keys(total_sales.monthly_sales)[i]);
           popular_item_analysis.min.name = found.name; 
           popular_item_analysis.min.total_sales =found.total_sales;
           popular_item_analysis.min.quantity = found.quantity;
@@ -271,6 +272,7 @@ function overall_popular_item(){
         }
 
         if(popular_item_analysis.max.total_sales == 0 || popular_item_analysis.max.total_sales < found.total_sales){
+          popular_item_analysis.max.month = parseInt(Object.keys(total_sales.monthly_sales)[i]);
           popular_item_analysis.max.name = found.name; 
           popular_item_analysis.max.total_sales =found.total_sales;
           popular_item_analysis.max.quantity = found.quantity;
@@ -282,6 +284,7 @@ function overall_popular_item(){
             (popular_item_analysis.max.total_sales < found.total_sales 
               && 
               popular_item_analysis.min.total_sales > found.total_sales  )){
+          popular_item_analysis.average.month = parseInt(Object.keys(total_sales.monthly_sales)[i]);
           popular_item_analysis.average.name = found.name;    
           popular_item_analysis.average.total_sales =found.total_sales;
           popular_item_analysis.average.quantity = found.quantity;
